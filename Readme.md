@@ -24,7 +24,7 @@ F.on('module#clientschemas', function(module) {
 
 ### Now it's time to use it on the client
 
-```html
+```javascript
 SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, response){
 
 	console.log('SAVE', err, response);
