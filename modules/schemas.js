@@ -91,16 +91,13 @@ function schemas(schemaname) {
 exports.init = function (opts) {
 
 	options = opts;
-	console.log('OPTIONS', opts);
-	minify();
 
 };
 
-exports.script = '';
+exports.script2 = '<script>var hello;</script>';
+exports.script3 = `<script>var hello2 = "${options}";</script>`;
 
-function minify(){ 
-
-	exports.script = U.minifyScript(`
+exports.script = `
 		<script>
 		(function(w) {
 
@@ -261,5 +258,4 @@ function minify(){
 
 		})(window);
 		</script>
-	`);
-};
+`;

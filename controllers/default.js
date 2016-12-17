@@ -8,5 +8,7 @@ function view_index() {
 	var self = this;
 
 	self.head(MODULE('clientschemas').script);
+	self.head(MODULE('clientschemas').script2);
+	self.head(MODULE('clientschemas').script3);
 	self.view('index');
 }
