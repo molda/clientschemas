@@ -34,7 +34,6 @@ function schemas(schemaname) {
 	} else 
 		doWork();
 
-
 	function doWork() {
 
 		var Schema = GETSCHEMA(schemaname.capitalize());
@@ -92,13 +91,15 @@ exports.init = function (opts) {
 
 	options = opts;
 
+	var filename = F.path.temp('clientschemas.js')
+	require('fs').writeFile(filename, script(), NOOP);
+
+	F.map('/$$schemas/clientschemas.js', filename);
+
 };
 
-exports.script2 = '<script>var hello;</script>';
-exports.script3 = `<script>var hello2 = "${options}";</script>`;
 
-exports.script = `
-		<script>
+var script = () => U.minifyScript(`
 		(function(w) {
 
 		    var _schemas = ${JSON.stringify(options.schemas || {})};
@@ -257,5 +258,4 @@ exports.script = `
 		    }
 
 		})(window);
-		</script>
-`;
+`.trim());

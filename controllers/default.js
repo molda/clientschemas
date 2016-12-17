@@ -6,10 +6,6 @@ exports.install = function() {
 
 function view_index() {
 	var self = this;
-
-	console.log('SCRIPT', MODULE('clientschemas').script);
-	self.head(MODULE('clientschemas').script);
-	self.head(MODULE('clientschemas').script2);
-	self.head(MODULE('clientschemas').script3);
+	
 	self.view('index');
 }
