@@ -1,47 +1,47 @@
 <!DOCTYPE html>
 <html>
 
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=11" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="robots" content="all,follow" />
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-        @{head}
-    </head>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=11" />
+		<meta name="format-detection" content="telephone=no" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="all,follow" />
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		@{head}
+	</head>
 
-    <body>
-    	@{body}
-        <script>
+	<body>
+		@{body}
+		<script>
 
-            SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, response){
+			SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, response){
 
-                console.log('SAVE', err, response);
-                get(response.id);
+				console.log('SAVE', err, response);
+				get(response.id);
 
-            }).workflow('login').exec();
+			}).workflow('login').exec();
 
-            function get(id) {
+			function get(id) {
 
-                SCHEMA('Contact').get({id: id}, function(err, response){
+				SCHEMA('Contact').get({id: id}, function(err, response){
 
-                    console.log('GET', err, response);
-                    query();
+					console.log('GET', err, response);
+					query();
 
-                }).exec();                
-            }
+				}).exec();                
+			}
 
-            function query() {
+			function query() {
 
-                SCHEMA('Contact').query(function(err, response){
+				SCHEMA('Contact').query(function(err, response){
 
-                    console.log('QUERY', err, response);
+					console.log('QUERY', err, response);
 
-                }).exec();
-            }
+				}).exec();
+			}
 
-        </script>
-    </body>
+		</script>
+	</body>
 </html>
 

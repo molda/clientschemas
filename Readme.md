@@ -1,10 +1,10 @@
 # Client-side schemas for Total.js
 
-**BETA VERSION - uses at your own risk**
+## **BETA VERSION - use at your own risk**
 
-## How it works
+### How it works
 
-All you need is the clientshemas.js module.
+All you need is the clientschemas.js module.
 Then initialize the module, by using bellow code in some definition file
 
 ```javascript
