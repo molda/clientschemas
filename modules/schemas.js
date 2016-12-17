@@ -124,6 +124,11 @@ function minify(){
 		    SchemaInstance.prototype.get = function(options, callback) {
 		        var self = this;
 
+		        if(typeof(options) === 'function') {
+		        	callback = options;
+		        	options = {};
+		        }
+
 		        self.commands.push({
 		            name: '$get',
 		            callback: callback ? true : false,
@@ -138,6 +143,11 @@ function minify(){
 		    SchemaInstance.prototype.query = function(options, callback) {
 		        var self = this;
 
+		        if(typeof(options) === 'function') {
+		        	callback = options;
+		        	options = {};
+		        }
+
 		        self.commands.push({
 		            name: '$query',
 		            callback: callback ? true : false,
@@ -151,6 +161,11 @@ function minify(){
 
 		    SchemaInstance.prototype.save = function(options, callback) {
 		        var self = this;
+
+		        if(typeof(options) === 'function') {
+		        	callback = options;
+		        	options = {};
+		        }
 
 		        self.commands.push({
 		            name: '$save',
@@ -205,11 +220,10 @@ function minify(){
 		        var self = this;
 		        if (callback) self.callback = callback;
 
-		        if(!_schemas[self.name]) return self.callback('SCHEMA_NOT_AVAILABLE');
-console.log('SCHEMAS', _schemas[self.name]);
-
+		        if(!_schemas[self.name]) {
+		        	return self.callback('SCHEMA_NOT_AVAILABLE');
+				}
 		        _request(self.name, { commands: self.commands }, function(err, response){
-
 		        	self.callback(err, response);
 		        });
 		    };
@@ -225,7 +239,7 @@ console.log('SCHEMAS', _schemas[self.name]);
 
 		            if (this.readyState == 4) {
 		            	if(this.status == 200) 
-		            		if(!cb_called) return callback(null, this.responseText);
+		            		if(!cb_called) return callback(null, JSON.parse(this.responseText));
 		            	else
 		            		!cb_called && responseError();   
 		            	cb_called = true;           	

@@ -13,7 +13,35 @@
 
     <body>
     	@{body}
-    </body>
+        <script>
 
+            SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, response){
+
+                console.log('SAVE', err, response);
+                get(response.id);
+
+            }).workflow('login').exec();
+
+            function get(id) {
+
+                SCHEMA('Contact').get({id: id}, function(err, response){
+
+                    console.log('GET', err, response);
+                    query();
+
+                }).exec();                
+            }
+
+            function query() {
+
+                SCHEMA('Contact').query(function(err, response){
+
+                    console.log('QUERY', err, response);
+
+                }).exec();
+            }
+
+        </script>
+    </body>
 </html>
 
