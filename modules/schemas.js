@@ -74,7 +74,6 @@ function schemas(schemaname) {
 
 		function next(){
 
-			var done = false;
 			var cmd = commands[index];
 			fn = instance[cmd.name];
 
@@ -84,15 +83,11 @@ function schemas(schemaname) {
 				cb_called = true;
 			}
 
-			if(!commands[index + 1]) {
-				done = true;
-			}
-
 			if(cmd.name === '$save') U.extend(instance, cmd.params[0]);
 			console.log('CMD', cmd);
 			fn = fn.apply(instance, cmd.params);
 
-			if(done) return;
+			if(!commands[index + 1]) return;
 
 			index++;
 			next();
