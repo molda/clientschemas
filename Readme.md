@@ -29,7 +29,7 @@ SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, respons
 
 	console.log('SAVE', err, response);
 
-}).workflow('login').exec();
+}).workflow('some-workflow').exec();
 
 
 SCHEMA('Contact').get({id: <some-id>}, function(err, response){
