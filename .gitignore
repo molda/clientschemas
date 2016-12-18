@@ -47,4 +47,5 @@ Temporary Items
 .apdisk
 debug.pid
 databases
-
+node_modules
+tmp

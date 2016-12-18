@@ -76,7 +76,7 @@ function schemas(schemaname) {
 			}
 
 			if(cmd.name === '$save') U.extend(instance, cmd.params[0]);
-			console.log('CMD', cmd);
+			
 			fn = fn.apply(instance, cmd.params);
 
 			if(!commands[index + 1]) return;

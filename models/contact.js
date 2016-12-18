@@ -3,12 +3,11 @@ NEWSCHEMA('Contact').make(function(schema) {
 	schema.define('id', 'String(20)');
 	schema.define('email', 'Email', true);
 
-	// Gets a specific user
 	schema.setGet(function(error, model, options, callback) {
 
-		console.log('**** Contact::get', options);
+		console.log('**** Contact::get', options.id);
 
-		var filter = NOSQL('users').one();
+		var filter = NOSQL('contacts').one();
 
 		options.id && filter.where('id', options.id);
 		options.email && filter.where('email', options.email);
@@ -20,23 +19,20 @@ NEWSCHEMA('Contact').make(function(schema) {
 
 		if(!model.id) {
 			model.id = UID();
-			NOSQL('users').insert(model);
-			console.log('Contact::save insert', model);
+			NOSQL('contacts').insert(model);
+			console.log('**** Contact::save insert', model.id);
 			callback({success:true, id: model.id});			
 		} else
-			NOSQL('users').modify(model).where('id', model.id).callback(function(count) {
-				console.log('Contact::save modify', model);
+			NOSQL('contacts').modify(model).where('id', model.id).callback(function(count) {
+				console.log('**** Contact::save modify', model.id);
 				callback({success:true, id: model.id});
 			});
-
 	});
 
-	// Removes user from DB
 	schema.setRemove(function(error, id, callback) {
-		NOSQL('users').remove().where('id', id).callback(callback);
+		NOSQL('contacts').remove().where('id', id).callback(callback);
 	});
 
-	// Gets listing
 	schema.setQuery(function(error, options, callback) {
 
 		options = options || { page: 1, max: 10 };
@@ -50,7 +46,7 @@ NEWSCHEMA('Contact').make(function(schema) {
 
 		var take = U.parseInt(options.max);
 		var skip = U.parseInt(options.page * options.max);
-		var filter = NOSQL('users').find();
+		var filter = NOSQL('contacts').find();
 
 		options.search && filter.like('search', options.search.keywords(true, true));
 
@@ -75,7 +71,7 @@ NEWSCHEMA('Contact').make(function(schema) {
 		// options.controller
 		// options.profile
 		// options.type
-		console.log('----------- WORKFLOW');
+		console.log('**** Contact::workflow#login', options);
 		callback();
 	});
 });
