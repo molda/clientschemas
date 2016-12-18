@@ -24,6 +24,12 @@ F.on('module#clientschemas', function(module) {
 
 ### Now it's time to use it on the client
 
+First add a script:
+```html
+<script src="/$$schemas/clientschemas.js" type="text/javascript"></script>
+```
+
+Now you can use it. `SCHEMA` is a global variable
 ```javascript
 SCHEMA('Contact').save({"email":"smolamartin@seznam.dsf"}, function(err, response){
 
