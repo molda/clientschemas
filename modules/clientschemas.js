@@ -1,14 +1,14 @@
 exports.name = 'clientschemas',
-exports.version ='0.0.1';
+exports.version = '0.0.1';
 
 var options = {};
 
 var errorResponse = {
-	msg: '',
+	errors: [],
 	success: false
 };
 
-exports.install = function () {
+exports.install = function() {
 
 	F.route('/$$schemas/{schemaname}', schemas, ['post']);
 
@@ -17,77 +17,72 @@ exports.install = function () {
 function schemas(schemaname) {
 	var self = this;
 	var payload = this.body;
-
+	var commands = (payload && payload.commands) || [];
 	var schemaOptions = options.schemas[schemaname];
-	errorResponse.msg = 'SCHEMA_NOT_AVAILABLE';
-	if(!schemaOptions) return self.json(errorResponse);
+	var Schema = GETSCHEMA(schemaname.capitalize());
 
-	var flags = [];
-	if(schemaOptions.authorize) {
-		F.onAuthorize(self.req, self.res, flags, function(isAuthorized, user){
-			if(!isAuthorized || (schemaOptions.role && flags.indexOf(schemaOptions.role) < 0)) {
-				errorResponse.msg = 'NOT_AUTHORIZED';
-				return self.json(errorResponse);
-			}
-			doWork();
-		});
-	} else 
-		doWork();
+	if (schemaOptions.authorize && !self.isAuthorized)
+		errorResponse.errors.push('NOT_AUTHORIZED');
 
-	function doWork() {
+	console.log('SCHEMA', self.req.$flags, self.req.$flags.indexOf(schemaOptions.role), schemaOptions.role);
+	if (schemaOptions.role && self.req.$flags.indexOf(schemaOptions.role) < 0)
+		errorResponse.errors.push('NOT_AUTHORIZED_ROLE');
+	
+	if (!schemaOptions)
+		errorResponse.errors.push('SCHEMA_NOT_AVAILABLE');
 
-		var Schema = GETSCHEMA(schemaname.capitalize());
+	if (!Schema)
+		errorResponse.errors.push('SCHEMA_DOESNT_EXIST');
 
-		errorResponse.msg = 'SCHEMA_DOESNT_EXIST';
-		if(!Schema) return self.json(errorResponse);
+	if (!payload)
+		errorResponse.errors.push('NO_PAYLOAD');
 
-		errorResponse.msg = 'NO_PAYLOAD';
-		if(!payload) return self.json(errorResponse);
+	if (!commands || !commands.length)
+		errorResponse.errors.push('NO_COMMAND_SPECIFIED');
 
-		var commands = payload.commands;
-		errorResponse.msg = 'NO_COMMAND_SPECIFIED';
-		if(!commands || !commands.length) return self.json(errorResponse);
+	if (errorResponse.errors.length)
+		return self.json(errorResponse);
 
-		var index = 0;
+	var index = 0;
 
-		for(let i = 0, l = commands.length; i < l; i++)
-			if(commands[i].callback) {
-				index = i;
-				break;
-			}
-
-		var instance = Schema.default().$async(self.callback(), index);
-
-		var fn;
-		var index = 0;
-		var cb_called = false;
-
-		next();
-
-		function next(){
-
-			var cmd = commands[index];
-			fn = instance[cmd.name];
-
-			cmd.params = cmd.params || [];
-
-			if(cmd.callback || (!commands[index + 1] && !cb_called)) {
-				cb_called = true;
-			}
-
-			if(cmd.name === '$save') U.extend(instance, cmd.params[0]);
-			
-			fn = fn.apply(instance, cmd.params);
-
-			if(!commands[index + 1]) return;
-
-			index++;
-			next();
+	for (var i = 0, l = commands.length; i < l; i++)
+		if (commands[i].callback) {
+			index = i;
+			break;
 		}
+
+	var instance = Schema.default().$async(self.callback(), index);
+
+	var fn;
+	var index = 0;
+	var cb_called = false;
+
+	next();
+
+	function next() {
+
+		var cmd = commands[index];
+		fn = instance[cmd.name];
+
+		cmd.params = cmd.params || [];
+
+		if (cmd.callback || (!commands[index + 1] && !cb_called))
+			cb_called = true;
+
+		if (cmd.name === '$save')
+			U.extend(instance, cmd.params[0]);
+
+		fn = fn.apply(instance, cmd.params);
+
+		if (!commands[index + 1])
+			return;
+
+		index++;
+		next();
 	}
 }
 
-exports.init = function (opts) {
+exports.init = function(opts) {
 
 	options = opts;
 
@@ -102,160 +97,166 @@ exports.init = function (opts) {
 var script = () => U.minifyScript(`
 		(function(w) {
 
-		    var _schemas = ${JSON.stringify(options.schemas || {})};
+			var _schemas = ${JSON.stringify(options.schemas || {})};
 
-		    w.SCHEMA = function(name) {
-		        return new SchemaInstance(name);
-		    };
+			w.SCHEMA = function(name) {
+				return new SchemaInstance(name);
+			};
 
-		    function SchemaInstance(name) {
-		        var self = this;
+			function SchemaInstance(name) {
+				var self = this;
 
-		        self.name = name;
-		        self.commands = [];
-		        self.callback = function() {};
+				self.name = name;
+				self.commands = [];
+				self.callback = function() {};
 
-		        return self;
+				return self;
+			};
 
-		    };
+			SchemaInstance.prototype.get = function(options, callback) {
+				var self = this;
 
-		    SchemaInstance.prototype.get = function(options, callback) {
-		        var self = this;
-
-		        if(typeof(options) === 'function') {
-		        	callback = options;
-		        	options = {};
-		        }
-
-		        self.commands.push({
-		            name: '$get',
-		            callback: callback ? true : false,
-		            params: [options]
-		        });
-
-		        if (callback) self.callback = callback;
-
-		        return self;
-		    };
-
-		    SchemaInstance.prototype.query = function(options, callback) {
-		        var self = this;
-
-		        if(typeof(options) === 'function') {
-		        	callback = options;
-		        	options = {};
-		        }
-
-		        self.commands.push({
-		            name: '$query',
-		            callback: callback ? true : false,
-		            params: [options]
-		        });
-
-		        if (callback) self.callback = callback;
-
-		        return self;
-		    };
-
-		    SchemaInstance.prototype.save = function(options, callback) {
-		        var self = this;
-
-		        if(typeof(options) === 'function') {
-		        	callback = options;
-		        	options = {};
-		        }
-
-		        self.commands.push({
-		            name: '$save',
-		            callback: callback ? true : false,
-		            params: [options]
-		        });
-
-		        if (callback) self.callback = callback;
-
-		        return self;
-		    };
-
-		    SchemaInstance.prototype.workflow = function(name, options, callback) {
-		        var self = this;
-
-		        if (typeof(options) === 'function') {
-		            callback = options;
-		            options = {};
-		        }
-
-		        self.commands.push({
-		            name: '$workflow',
-		            callback: callback ? true : false,
-		            params: [name, options]
-		        });
-
-		        if (callback) self.callback = callback;
-
-		        return self;
-		    };
-
-		    SchemaInstance.prototype.operation = function(name, options, callback) {
-		        var self = this;
-
-		        if (typeof(options) === 'function') {
-		            callback = options;
-		            options = {};
-		        }
-
-		        self.commands.push({
-		            name: '$operation',
-		            callback: callback ? true : false,
-		            params: [name, options]
-		        });
-
-		        if (callback) self.callback = callback;
-
-		        return self;
-		    };
-
-		    SchemaInstance.prototype.exec = function(callback) {
-		        var self = this;
-		        if (callback) self.callback = callback;
-
-		        if(!_schemas[self.name]) {
-		        	return self.callback('SCHEMA_NOT_AVAILABLE');
+				if (typeof(options) === 'function') {
+					callback = options;
+					options = {};
 				}
-		        _request(self.name, { commands: self.commands }, function(err, response){
-		        	self.callback(err, response);
-		        });
-		    };
+
+				self.commands.push({
+					name: '$get',
+					callback: callback ? true : false,
+					params: [options]
+				});
+
+				if (callback) 
+					self.callback = callback;
+
+				return self;
+			};
+
+			SchemaInstance.prototype.query = function(options, callback) {
+				var self = this;
+
+				if (typeof(options) === 'function') {
+					callback = options;
+					options = {};
+				}
+
+				self.commands.push({
+					name: '$query',
+					callback: callback ? true : false,
+					params: [options]
+				});
+
+				if (callback) 
+					self.callback = callback;
+
+				return self;
+			};
+
+			SchemaInstance.prototype.save = function(options, callback) {
+				var self = this;
+
+				if (typeof(options) === 'function') {
+					callback = options;
+					options = {};
+				}
+
+				self.commands.push({
+					name: '$save',
+					callback: callback ? true : false,
+					params: [options]
+				});
+
+				if (callback) 
+					self.callback = callback;
+
+				return self;
+			};
+
+			SchemaInstance.prototype.workflow = function(name, options, callback) {
+				var self = this;
+
+				if (typeof(options) === 'function') {
+					callback = options;
+					options = {};
+				}
+
+				self.commands.push({
+					name: '$workflow',
+					callback: callback ? true : false,
+					params: [name, options]
+				});
+
+				if (callback) 
+					self.callback = callback;
+
+				return self;
+			};
+
+			SchemaInstance.prototype.operation = function(name, options, callback) {
+				var self = this;
+
+				if (typeof(options) === 'function') {
+					callback = options;
+					options = {};
+				}
+
+				self.commands.push({
+					name: '$operation',
+					callback: callback ? true : false,
+					params: [name, options]
+				});
+
+				if (callback) 
+					self.callback = callback;
+
+				return self;
+			};
+
+			SchemaInstance.prototype.exec = function(callback) {
+				var self = this;
+
+				if (callback)
+					self.callback = callback;
+
+				if (!_schemas[self.name])
+					return self.callback('SCHEMA_NOT_AVAILABLE');
+				
+				_request(self.name, { commands: self.commands }, function(err, response){
+					self.callback(err, response);
+				});
+			};
 
 
-		    function _request(schemaname, data, callback) {
+			function _request(schemaname, data, callback) {
 
-		        var xhr = new XMLHttpRequest();
+				var xhr = new XMLHttpRequest();
 
-		        var cb_called = false;
+				var cb_called = false;
 
-		        xhr.onreadystatechange = function() {
+				xhr.onreadystatechange = function() {
 
-		            if (this.readyState == 4) {
-		            	if(this.status == 200) 
-		            		if(!cb_called) return callback(null, JSON.parse(this.responseText));
-		            	else
-		            		!cb_called && responseError();   
-		            	cb_called = true;           	
-		            }
-		        };
+					if (this.readyState == 4) {
+						if (this.status == 200) 
+							if(!cb_called) return callback(null, JSON.parse(this.responseText));
+						else
+							!cb_called && responseError();   
+						cb_called = true;           	
+					}
+				};
 
-		        xhr.onerror = responseError;
-		        xhr.ontimeout = responseError;
+				xhr.onerror = responseError;
+				xhr.ontimeout = responseError;
 
-		        function responseError(){
-		        	!cb_called && callback('Error: Request failed');
-		        	cb_called = true;                	
-		        }
+				function responseError(){
+					!cb_called && callback('Error: Request failed');
+					cb_called = true;                	
+				}
 
-		        xhr.open('POST', '/$$schemas/' + schemaname, true);
-		        xhr.setRequestHeader("Content-Type","application/json");
-		        xhr.send(JSON.stringify(data));
-		    }
+				xhr.open('POST', '/$$schemas/' + schemaname, true);
+				xhr.setRequestHeader("Content-Type","application/json");
+				xhr.send(JSON.stringify(data));
+			}
 
 		})(window);
 `.trim());

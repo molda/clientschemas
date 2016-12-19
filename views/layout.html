@@ -36,7 +36,7 @@
 
 			function query() {
 
-				SCHEMA('Contact').query(function(err, response){
+				SCHEMA('Contact').query({max: 10}, function(err, response){
 
 					console.log('QUERY', err, response);
 
