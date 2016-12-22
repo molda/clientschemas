@@ -1,4 +1,4 @@
 F.onAuthorize = function(req, res, flags, callback){
-	flags.push('@admini');
+	flags.push('@admin');
 	callback(true);
 };

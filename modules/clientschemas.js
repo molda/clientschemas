@@ -23,9 +23,9 @@ function schemas(schemaname) {
 
 	if (schemaOptions.authorize && !self.isAuthorized)
 		errorResponse.errors.push('NOT_AUTHORIZED');
+	console.log('AUTH', schemaOptions.authorize, self.isAuthorized, errorResponse.errors);
 
-	console.log('SCHEMA', self.req.$flags, self.req.$flags.indexOf(schemaOptions.role), schemaOptions.role);
-	if (schemaOptions.role && self.req.$flags.indexOf(schemaOptions.role) < 0)
+	if (schemaOptions.role && self.req.flags.indexOf(schemaOptions.role) < 0)
 		errorResponse.errors.push('NOT_AUTHORIZED_ROLE');
 	
 	if (!schemaOptions)
@@ -40,8 +40,11 @@ function schemas(schemaname) {
 	if (!commands || !commands.length)
 		errorResponse.errors.push('NO_COMMAND_SPECIFIED');
 
-	if (errorResponse.errors.length)
-		return self.json(errorResponse);
+	if (errorResponse.errors.length) {
+		self.json(errorResponse);
+		errorResponse.errors = [];
+		return; 
+	}
 
 	var index = 0;
 
@@ -83,6 +86,12 @@ function schemas(schemaname) {
 }
 
 exports.init = function(opts) {
+
+	Object.keys(opts.schemas).forEach(function(opt){
+		var opt = opts.schemas[opt];
+		if (opt.role && !opt.authorize)
+			opt.authorize = true;		
+	});
 
 	options = opts;
 
